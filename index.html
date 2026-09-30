@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HydroRegime Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:#0F172A;color:#e2e8f0;font-family:Inter,Outfit,system-ui,sans-serif;margin:0}
+.card{background:rgba(30,41,59,.7);backdrop-filter:blur(10px);border:1px solid #1e293b;border-radius:14px;padding:14px;transition:all .3s}
+.pulse{animation:p 1.4s infinite}@keyframes p{50%{opacity:.35;transform:scale(1.5)}}
+.glow{box-shadow:0 0 18px #0284C788}
+.fade{animation:f .4s}@keyframes f{from{opacity:0;transform:translateY(6px)}}
+.dash{animation:d 1s linear infinite}@keyframes d{to{stroke-dashoffset:-12}}
+.b{transition:width .7s cubic-bezier(.2,.8,.2,1)}
+
+:root{--map:radial-gradient(circle at 50% 40%,#12223f,#0b1222);--land:#1E293B;--lands:#334155;--lbl:#cbd5e1;--bg:#0F172A;--vec:#c4b5fd}
+:root[data-theme=light]{--map:radial-gradient(circle at 50% 40%,#e0f2fe,#f1f5f9);--land:#fff;--lands:#94a3b8;--lbl:#334155;--bg:#F1F5F9;--vec:#6d28d9}
+:root[data-theme=light] body{background:#F1F5F9;color:#0f172a}
+:root[data-theme=light] .card{background:rgba(255,255,255,.8);border-color:#cbd5e1;box-shadow:0 1px 3px #0f172a14}
+:root[data-theme=light] .bg-slate-800,:root[data-theme=light] .bg-slate-800\/70,:root[data-theme=light] .bg-slate-800\/80{background:#e2e8f0}
+:root[data-theme=light] .bg-slate-700{background:#cbd5e1}
+:root[data-theme=light] .bg-slate-900\/80{background:rgba(255,255,255,.88)}
+:root[data-theme=light] .bg-black\/60{background:#fff}
+:root[data-theme=light] .border-slate-800,:root[data-theme=light] .border-slate-700,:root[data-theme=light] .border-slate-600{border-color:#cbd5e1}
+:root[data-theme=light] .text-slate-400{color:#475569}
+:root[data-theme=light] .text-slate-500{color:#64748b}
+:root[data-theme=light] .text-cyan-300{color:#0369a1}
+:root[data-theme=light] .text-emerald-300{color:#047857}
+:root[data-theme=light] .text-emerald-400{color:#059669}
+:root[data-theme=light] .text-amber-400{color:#b45309}
+:root[data-theme=light] .hover\:bg-slate-700:hover,:root[data-theme=light] .hover\:bg-slate-800:hover{background:#cbd5e1}
+:root[data-theme=light] .glow{box-shadow:0 0 14px #0284C766}
+select,input{color:inherit}
+</style></head>
+<body><div id="root"></div>
+<script>
+const {useState,useEffect,useMemo}=React, html=htm.bind(React.createElement);
+const D=[["Wayanad","Kerala",170,375,45.2,128.6,780,88.4],["Idukki","Kerala",180,395,40,118,1100,81],["Kodagu","Karnataka",165,355,38,104,1170,74],["Mumbai","Maharashtra",115,265,52,96,14,62],["Ratnagiri","Maharashtra",125,295,48,122,60,79],["Nagpur","Maharashtra",195,235,20,41,310,22],["Kolkata","West Bengal",290,215,33,70,9,44],["Bhubaneswar","Odisha",260,240,30,58,45,38],["Guwahati","Assam",335,130,44,90,55,55],["Dehradun","Uttarakhand",180,85,25,66,640,40],["Patna","Bihar",255,165,18,36,53,18],["Chennai","Tamil Nadu",225,360,9,15,7,6],["Jaipur","Rajasthan",130,150,4,9,431,3]].map(a=>({n:a[0],s:a[1],x:a[2],y:a[3],raw:a[4],ai:a[5],el:a[6],p:a[7]}));
+const REG=[["Active Monsoon",1,"🌧️"],["Break Monsoon",.3,"🌤️"],["Monsoon Depression",1.15,"🌀"],["Orographic / Coastal",1.05,"⛰️"],["Western Disturbance",.2,"❄️"]];
+const LEAD={24:1,48:.85,72:.7};
+const col=v=>v<.1?"transparent":v<20?"#10B981":v<65?"#F59E0B":v<115.5?"#F97316":v<204?"#EF4444":"#8B5CF6";
+const alert=v=>v>204.4?"Extremely Heavy":v>115.5?"Very Heavy":v>64.5?"Heavy":null;
+const SK=[["CSI",.42,.78,"+36%",1],["POD",.58,.89,"+31%",1],["FAR",.45,.14,"-31%",1],["RMSE (mm)",28.4,11.2,"-60%",30],["FSS",.51,.84,"+33%",1]];
+const LOG=["Ingested GRIB2 NCUM 0.25° Grid Dataset...","Stage 1 ResNet-18 Classifier: Identified 'Monsoon Depression' (Confidence 94.8%)...","Stage 2 Optical Flow Alignment: Corrected 45km Eastward Storm Center Offset...","Stage 2 Quantile U-Net Applied: Rescaled Orographic Extremes for Western Ghats...","Verification Engine: CSI Score Improved from 0.42 to 0.78. Zero Egress Verified."];
+const Sw=({on,set,label,sub,c="#0284C7"})=>html`<button onClick=${()=>set(!on)} className="w-full flex items-center gap-3 text-left py-1.5"><span className="w-9 h-5 rounded-full relative shrink-0 transition" style=${{background:on?c:"#334155"}}><span className="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all" style=${{left:on?18:2}}/></span><span className="text-xs leading-tight">${label}${sub&&html`<span className="block text-[10px] text-slate-500">${sub}</span>`}</span></button>`;
+
+function App(){
+ const [theme,setTheme]=useState(()=>window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"),[lead,setLead]=useState(24),[reg,setReg]=useState(2),[layers,setL]=useState({raw:false,ai:true,obs:false,vec:true});
+ const [th,setTh]=useState({all:true,h:false,v:false,x:false}),[sel,setSel]=useState(0),[hov,setHov]=useState(null),[toast,setToast]=useState(""),[logN,setLogN]=useState(1),[clock,setClock]=useState(new Date());
+ useEffect(()=>{document.documentElement.dataset.theme=theme},[theme]);
+ useEffect(()=>{const t=setInterval(()=>{setLogN(n=>n>=LOG.length?1:n+1);setClock(new Date())},2500);return()=>clearInterval(t)},[]);
+ const primary=layers.ai?"ai":layers.raw?"raw":layers.obs?"obs":"ai";
+ const val=(d,m)=>{const k=LEAD[lead];const ai=d.ai*REG[reg][1]*k*(reg==3?1+d.el/8000:1);return m=="raw"?d.raw*k:m=="obs"?ai*.94:ai};
+ const min=th.all?.1:Math.min(...[th.h&&64.5,th.v&&115.5,th.x&&204.4].filter(Boolean),1e9);
+ const S=D[sel],sv=val(S,"ai"),prob=Math.min(99,S.p*REG[reg][1]*(1.05-lead/400)).toFixed(1);
+ const showT=hov!==null?D[hov]:null;
+ const tm=n=>{const d=new Date(clock.getTime()+n*1000);return d.toTimeString().slice(0,8)};
+ const notify=m=>{setToast(m);setTimeout(()=>setToast(""),2500)};
+ const tg=k=>setL({...layers,[k]:!layers[k]});
+ return html`<div className="min-h-screen flex flex-col">
+ <header className="flex flex-wrap items-center gap-3 justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/80 sticky top-0 z-20 backdrop-blur">
+  <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl grid place-items-center glow" style=${{background:"linear-gradient(135deg,#0284C7,#10B981)"}}>💧</div>
+   <div><div className="font-bold text-lg leading-none">HydroRegime</div><div className="text-[10px] text-slate-400">Ministry of Earth Sciences (NCMRWF)</div></div>
+   <span className="text-[10px] px-2 py-1 rounded-full border border-cyan-700 text-cyan-300"></span></div>
+  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-700 bg-slate-800/70 text-xs fade" key=${reg}>
+   <span className="w-2.5 h-2.5 rounded-full pulse" style=${{background:reg==1||reg==4?"#F59E0B":"#EF4444"}}></span>
+   Active Synoptic Regime: <b className="uppercase">${REG[reg][0]}</b> <span className="text-slate-400">(Confidence: ${[91.2,88.5,94.8,92.1,86.7][reg]}%)</span></div>
+  <div className="flex flex-wrap items-center gap-2 text-xs">
+   <button onClick=${()=>setTheme(theme=="dark"?"light":"dark")} className="px-2.5 py-1 rounded-full border border-slate-700 bg-slate-800 hover:brightness-110 transition" title="Toggle theme">${theme=="dark"?"☀️ Light":"🌙 Dark"}</button>
+   <span className="text-emerald-400 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400 pulse"></span>Live NCUM 0.25° Grid Ingested</span>
+   <input type="datetime-local" className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs" defaultValue="2026-07-14T06:00"/>
+   <select value=${sel} onChange=${e=>setSel(+e.target.value)} className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs">${D.map((d,i)=>html`<option key=${i} value=${i}>${d.n}, ${d.s}</option>`)}</select>
+   <span className="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-700">🛡 Air-Gap / Local Mode: Active</span></div>
+ </header>
+ <main className="flex-1 grid gap-3 p-3 lg:grid-cols-[320px_1fr_380px]">
+  <aside className="flex flex-col gap-3">
+   <div className="card"><h3 className="text-xs font-semibold text-slate-400 mb-2">FORECAST LEAD TIME</h3><div className="grid grid-cols-3 gap-2">${[24,48,72].map(h=>html`<button key=${h} onClick=${()=>setLead(h)} className=${"py-3 rounded-xl text-sm font-semibold border transition "+(lead==h?"bg-cyan-600 border-cyan-400 glow":"bg-slate-800 border-slate-700 hover:border-slate-500")}>${h}<span className="block text-[10px] font-normal">Hours</span></button>`)}</div></div>
+   <div className="card"><h3 className="text-xs font-semibold text-slate-400 mb-2">SYNOPTIC REGIME CLASSIFIER · STAGE 1</h3>
+    <div className="rounded-xl bg-slate-800/80 p-3 mb-2 fade" key=${reg}><div className="flex items-center gap-2 text-sm font-semibold"><span className="text-2xl">${REG[reg][2]}</span>${REG[reg][0]}</div>
+     <div className="h-1.5 bg-slate-700 rounded mt-2"><div className="b h-full rounded bg-cyan-500" style=${{width:[91.2,88.5,94.8,92.1,86.7][reg]+"%"}}/></div></div>
+    ${REG.map((r,i)=>html`<label key=${i} className="flex items-center gap-2 text-xs py-1 cursor-pointer"><input type="radio" checked=${reg==i} onChange=${()=>setReg(i)} className="accent-cyan-500"/>${r[0]}</label>`)}</div>
+   <div className="card"><h3 className="text-xs font-semibold text-slate-400 mb-1">RAINFALL INTENSITY (IMD)</h3>
+    ${[["all","All Rainfall (>0.1 mm)","#10B981"],["h","Heavy (>64.5 mm)","#F59E0B"],["v","Very Heavy (>115.5 mm)","#F97316"],["x","Extremely Heavy (>204.4 mm)","#8B5CF6"]].map(([k,l,c])=>html`<${Sw} key=${k} on=${th[k]} set=${v=>setTh(k=="all"&&v?{all:true,h:false,v:false,x:false}:{...th,[k]:v,all:false})} label=${l} c=${c}/>`)}</div>
+   <div className="card"><h3 className="text-xs font-semibold text-slate-400 mb-1">MODEL LAYERS</h3>
+    <${Sw} on=${layers.raw} set=${()=>tg("raw")} label="Raw NWP Forecast" sub="Uncorrected"/>
+    <${Sw} on=${layers.ai} set=${()=>tg("ai")} label="HydroRegime Bias-Corrected" sub="Recommended" c="#10B981"/>
+    <${Sw} on=${layers.obs} set=${()=>tg("obs")} label="IMD Observed Ground Truth" sub="Validation" c="#F59E0B"/>
+    <${Sw} on=${layers.vec} set=${()=>tg("vec")} label="Storm Displacement Vectors" sub="Optical Flow Alignment" c="#8B5CF6"/></div>
+  </aside>
+  <section className="card relative p-0 overflow-hidden min-h-[520px]" style=${{background:"var(--map)"}}>
+   <svg viewBox="0 0 400 460" className="w-full h-full absolute inset-0" preserveAspectRatio="xMidYMid meet">
+    <defs><filter id="bl"><feGaussianBlur stdDeviation="10"/></filter></defs>
+    <polygon points="150,20 200,15 240,40 280,60 330,90 370,110 380,150 340,160 300,170 280,210 270,260 240,320 215,400 195,440 175,400 150,340 120,290 80,250 60,215 90,190 70,150 100,110 130,60" fill="var(--land)" stroke="var(--lands)" strokeWidth="1.5"/>
+    <g filter="url(#bl)" opacity=".75">${D.map((d,i)=>{const v=val(d,primary);return v>=min?html`<circle key=${i} cx=${d.x} cy=${d.y} r=${14+Math.min(v,220)/9} fill=${col(v)} style=${{transition:"all .6s"}}/>`:null})}</g>
+    ${D.map((d,i)=>{const v=val(d,primary),on=v>=min;return html`<g key=${i} onMouseEnter=${()=>setHov(i)} onMouseLeave=${()=>setHov(null)} onClick=${()=>setSel(i)} className="cursor-pointer" opacity=${on?1:.25}>
+     <circle cx=${d.x} cy=${d.y} r=${sel==i?7:5} fill=${col(v)==="transparent"?"#475569":col(v)} stroke=${sel==i?"var(--lbl)":"var(--bg)"} strokeWidth="1.5"/>
+     ${sel==i&&html`<circle cx=${d.x} cy=${d.y} r="10" fill="none" stroke="#0284C7" className="pulse"/>`}
+     <text x=${d.x+9} y=${d.y+3} fontSize="8" fill="var(--lbl)">${d.n}</text></g>`})}
+    ${layers.vec&&html`<g><circle cx="150" cy="330" r="9" fill="none" stroke="#8B5CF6" strokeWidth="2"/><text x="146" y="334" fontSize="11">🌀</text>
+     ${[[0,0],[-14,14],[14,-14]].map(([a,b],i)=>html`<line key=${i} x1=${125+a} y1=${330+b} x2=${168+a} y2=${330+b} stroke="var(--vec)" strokeWidth="1.5" strokeDasharray="4 2" className="dash"/>`)}
+     <text x="90" y="315" fontSize="8" fill="var(--vec)">Δ 45 km E</text></g>`}
+   </svg>
+   <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
+    <div className="card !p-2 text-[10px]"><div className="flex h-2 w-44 rounded overflow-hidden"><span className="flex-1 bg-slate-700"/><span className="flex-1" style=${{background:"#10B981"}}/><span className="flex-1" style=${{background:"#F59E0B"}}/><span className="flex-1" style=${{background:"#F97316"}}/><span className="flex-1" style=${{background:"#8B5CF6"}}/></div>
+     <div className="flex justify-between w-44 mt-1 text-slate-400"><span>0</span><span>20</span><span>65</span><span>115</span><span>200+</span></div></div>
+    <div className="card !p-1 flex gap-1 text-xs"><button className="px-2 py-1 hover:bg-slate-700 rounded" title="Layers" onClick=${()=>notify("Use Model Layers panel")}>🗂</button><button className="px-2 py-1 hover:bg-slate-700 rounded" onClick=${()=>document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}>⛶</button></div></div>
+   <div className="absolute bottom-3 left-3 text-[11px] card !p-2">Layer: <b className="text-cyan-300">${primary=="ai"?"HydroRegime":primary=="raw"?"Raw NWP":"IMD Observed"}</b> · +${lead}h</div>
+   ${showT&&html`<div className="absolute top-3 left-3 card !p-3 text-xs w-64 fade glow z-10" key=${hov}>
+    <div className="font-bold text-sm">${showT.n}, ${showT.s}</div>
+    <div className="mt-1 space-y-0.5"><div className="flex justify-between"><span className="text-slate-400">Raw NWP</span><b>${val(showT,"raw").toFixed(1)} mm</b></div>
+    <div className="flex justify-between"><span className="text-slate-400">AI Bias-Corrected</span><b style=${{color:col(val(showT,"ai"))}}>${val(showT,"ai").toFixed(1)} mm</b></div>
+    ${alert(val(showT,"ai"))&&html`<div className="text-amber-400">⚠️ ${alert(val(showT,"ai"))} Rain Alert</div>`}
+    <div className="flex justify-between"><span className="text-slate-400">Extreme Rain Prob.</span><b>${Math.min(99,showT.p*REG[reg][1]).toFixed(1)}%</b></div>
+    <div className="flex justify-between"><span className="text-slate-400">Elevation</span><b>${showT.el}m MSL</b></div>
+    <div className="flex justify-between"><span className="text-slate-400">Correction Δ</span><b className="text-emerald-400">+${(val(showT,"ai")-val(showT,"raw")).toFixed(1)} mm</b></div>
+    ${showT.el>500&&html`<div className="text-[10px] text-cyan-300">Orographic Lift Applied</div>`}</div></div>`}
+  </section>
+  <aside className="flex flex-col gap-3">
+   <div className="card"><h3 className="text-xs font-semibold text-slate-400 mb-3">REAL-TIME SKILL SCORECARD</h3>
+    <div className="flex gap-3 text-[10px] mb-2"><span><i className="inline-block w-2 h-2 bg-slate-500 mr-1"/>Raw NWP</span><span><i className="inline-block w-2 h-2 bg-cyan-500 mr-1"/>HydroRegime</span></div>
+    ${SK.map(([n,r,a,dl,mx])=>html`<div key=${n} className="mb-2.5"><div className="flex justify-between text-xs"><span>${n}</span><span className=${"font-semibold "+(dl[0]=="+"||n=="FAR"||n=="RMSE (mm)"?"text-emerald-400":"")}>${dl}</span></div>
+     <div className="h-2 bg-slate-800 rounded mt-1"><div className="b h-full rounded bg-slate-500" style=${{width:r/mx*100+"%"}}/></div>
+     <div className="h-2 bg-slate-800 rounded mt-1"><div className="b h-full rounded bg-cyan-500" style=${{width:a/mx*100+"%"}}/></div>
+     <div className="flex justify-between text-[10px] text-slate-400 mt-0.5"><span>${r}</span><span>${a}</span></div></div>`)}</div>
+   <div className="card flex items-center gap-4"><svg viewBox="0 0 100 100" className="w-28 h-28 -rotate-90 shrink-0"><circle cx="50" cy="50" r="42" fill="none" stroke="#1e293b" strokeWidth="10"/>
+    <circle cx="50" cy="50" r="42" fill="none" stroke=${prob>75?"#EF4444":prob>40?"#F59E0B":"#10B981"} strokeWidth="10" strokeLinecap="round" strokeDasharray=${264} strokeDashoffset=${264*(1-prob/100)} style=${{transition:"all .8s"}}/></svg>
+    <div><div className="text-3xl font-bold">${prob}%</div><div className="text-xs text-slate-400">Heavy Rain Risk</div><div className="text-sm mt-1">${S.n}, ${S.s}</div><div className="text-xs" style=${{color:col(sv)}}>${sv.toFixed(1)} mm · ${alert(sv)||"No alert"}</div></div></div>
+   <div className="card flex flex-col gap-2">
+    <button onClick=${()=>notify("DDMA bulletin for "+S.n+" queued (demo)")} className="py-3 rounded-xl font-semibold text-sm glow hover:brightness-110 transition" style=${{background:"linear-gradient(90deg,#0284C7,#0ea5e9)"}}>📄 Generate Official DDMA Emergency Bulletin (.PDF)</button>
+    <button onClick=${()=>notify("Skill score CSV export (demo)")} className="py-2 rounded-xl text-sm border border-slate-600 hover:bg-slate-800">📊 Export Skill Score Verification CSV</button></div>
+  </aside>
+ </main>
+ <footer className="h-20 bg-black/60 border-t border-slate-800 px-4 py-2 font-mono text-[11px] text-emerald-300 overflow-hidden">
+  ${LOG.slice(0,logN).slice(-3).map((l,i)=>html`<div key=${l} className="fade">[${tm(i-3)}] ${l}</div>`)}<span className="pulse">▍</span></footer>
+ ${toast&&html`<div className="fixed bottom-24 left-1/2 -translate-x-1/2 card glow fade text-sm z-30">${toast}</div>`}
+ </div>`;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(html`<${App}/>`);
+</script></body></html>
