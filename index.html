@@ -38,7 +38,10 @@ select,input{color:inherit}
 <body><div id="root"></div>
 <script>
 const {useState,useEffect,useMemo}=React, html=htm.bind(React.createElement);
-const D=[["Wayanad","Kerala",170,375,45.2,128.6,780,88.4],["Idukki","Kerala",180,395,40,118,1100,81],["Kodagu","Karnataka",165,355,38,104,1170,74],["Mumbai","Maharashtra",115,265,52,96,14,62],["Ratnagiri","Maharashtra",125,295,48,122,60,79],["Nagpur","Maharashtra",195,235,20,41,310,22],["Kolkata","West Bengal",290,215,33,70,9,44],["Bhubaneswar","Odisha",260,240,30,58,45,38],["Guwahati","Assam",335,130,44,90,55,55],["Dehradun","Uttarakhand",180,85,25,66,640,40],["Patna","Bihar",255,165,18,36,53,18],["Chennai","Tamil Nadu",225,360,9,15,7,6],["Jaipur","Rajasthan",130,150,4,9,431,3]].map(a=>({n:a[0],s:a[1],x:a[2],y:a[3],raw:a[4],ai:a[5],el:a[6],p:a[7]}));
+const P=(la,lo)=>[(lo-68)*12.5+12,(37.5-la)*13.5+15];
+const IN="M135.0,42.1L148.4,57.9L147.1,68.9L152.1,75.8L151.7,82.7L142.7,80.9L146.2,95.8L158.5,104.3L175.9,113.8L168.0,119.9L163.1,132.5L175.2,137.6L187.0,144.3L203.3,151.8L220.4,153.6L227.6,160.4L237.3,161.7L252.3,164.9L262.8,164.7L264.2,159.3L262.5,150.7L263.5,144.9L271.1,142.1L272.2,152.7L272.4,155.4L283.8,160.5L291.7,158.4L302.2,159.3L312.4,158.9L313.3,150.6L308.2,146.3L318.3,144.6L329.7,134.6L344.1,126.0L354.6,129.3L363.5,123.6L369.3,132.0L365.1,137.7L378.6,139.7L379.5,144.8L375.1,147.3L376.2,155.6L367.2,153.2L351.1,162.5L351.4,170.2L344.5,181.6L343.9,188.1L338.3,199.3L328.6,196.2L328.1,210.2L325.3,214.8L326.6,220.5L320.4,223.7L313.8,202.3L310.4,202.3L308.3,210.9L301.5,204.0L305.3,196.3L310.9,195.5L316.7,184.1L309.5,181.8L297.9,182.0L286.0,180.1L284.9,170.7L278.9,170.1L269.0,164.2L264.6,173.4L273.6,180.5L265.8,185.6L263.1,190.5L270.7,194.1L268.6,202.2L273.0,212.4L274.9,223.5L273.1,228.4L264.6,228.3L249.2,231.1L249.9,241.2L243.2,249.2L225.3,258.3L211.3,274.2L201.9,282.7L189.4,291.5L189.4,297.7L183.2,301.1L171.9,305.9L166.1,306.6L162.3,316.9L164.9,334.5L165.6,345.7L160.3,358.5L160.2,381.4L153.8,382.1L148.1,392.4L151.9,396.8L140.5,400.7L136.3,409.8L131.2,413.7L119.4,401.1L113.6,382.2L108.8,368.6L104.5,362.2L97.8,349.2L94.7,332.4L92.5,323.9L81.2,305.4L76.0,279.2L72.3,261.9L72.3,245.6L69.9,232.9L51.7,241.0L42.9,239.4L26.6,223.0L32.6,218.2L28.9,212.9L14.2,201.4L22.5,192.4L50.0,192.4L47.6,180.8L40.5,174.0L39.1,163.6L30.9,157.5L44.7,143.4L59.2,144.4L72.3,130.3L80.1,116.6L92.3,103.0L92.1,93.4L102.7,85.6L92.6,78.9L88.3,69.8L83.9,58.0L90.0,52.1L109.0,55.4L122.9,53.4L135.0,42.1Z";
+const SC=P(14.5,72.6);
+const D=[["Wayanad","Kerala",11.685,76.132,45.2,128.6,780,88.4],["Idukki","Kerala",9.85,76.97,40,118,1100,81],["Kodagu","Karnataka",12.42,75.74,38,104,1170,74],["Mumbai","Maharashtra",19.076,72.878,52,96,14,62],["Ratnagiri","Maharashtra",16.99,73.3,48,122,60,79],["Nagpur","Maharashtra",21.146,79.088,20,41,310,22],["Kolkata","West Bengal",22.57,88.36,33,70,9,44],["Bhubaneswar","Odisha",20.3,85.82,30,58,45,38],["Guwahati","Assam",26.14,91.74,44,90,55,55],["Dehradun","Uttarakhand",30.32,78.03,25,66,640,40],["Patna","Bihar",25.61,85.14,18,36,53,18],["Chennai","Tamil Nadu",13.08,80.27,9,15,7,6],["Jaipur","Rajasthan",26.91,75.79,4,9,431,3]].map(a=>({n:a[0],s:a[1],x:P(a[2],a[3])[0],y:P(a[2],a[3])[1],raw:a[4],ai:a[5],el:a[6],p:a[7]}));
 const REG=[["Active Monsoon",1,"🌧️"],["Break Monsoon",.3,"🌤️"],["Monsoon Depression",1.15,"🌀"],["Orographic / Coastal",1.05,"⛰️"],["Western Disturbance",.2,"❄️"]];
 const LEAD={24:1,48:.85,72:.7};
 const col=v=>v<.1?"transparent":v<20?"#10B981":v<65?"#F59E0B":v<115.5?"#F97316":v<204?"#EF4444":"#8B5CF6";
@@ -92,16 +95,16 @@ function App(){
   </aside>
   <section className="card relative p-0 overflow-hidden min-h-[520px]" style=${{background:"var(--map)"}}>
    <svg viewBox="0 0 400 460" className="w-full h-full absolute inset-0" preserveAspectRatio="xMidYMid meet">
-    <defs><filter id="bl"><feGaussianBlur stdDeviation="10"/></filter></defs>
-    <polygon points="150,20 200,15 240,40 280,60 330,90 370,110 380,150 340,160 300,170 280,210 270,260 240,320 215,400 195,440 175,400 150,340 120,290 80,250 60,215 90,190 70,150 100,110 130,60" fill="var(--land)" stroke="var(--lands)" strokeWidth="1.5"/>
-    <g filter="url(#bl)" opacity=".75">${D.map((d,i)=>{const v=val(d,primary);return v>=min?html`<circle key=${i} cx=${d.x} cy=${d.y} r=${14+Math.min(v,220)/9} fill=${col(v)} style=${{transition:"all .6s"}}/>`:null})}</g>
+    <defs><clipPath id="lc"><path d=${IN}/></clipPath><filter id="bl"><feGaussianBlur stdDeviation="10"/></filter></defs>
+    <path d=${IN} fill="var(--land)" stroke="var(--lands)" strokeWidth="1.2" strokeLinejoin="round"/>
+    <g clipPath="url(#lc)"><g filter="url(#bl)" opacity=".75">${D.map((d,i)=>{const v=val(d,primary);return v>=min?html`<circle key=${i} cx=${d.x} cy=${d.y} r=${14+Math.min(v,220)/9} fill=${col(v)} style=${{transition:"all .6s"}}/>`:null})}</g></g>
     ${D.map((d,i)=>{const v=val(d,primary),on=v>=min;return html`<g key=${i} onMouseEnter=${()=>setHov(i)} onMouseLeave=${()=>setHov(null)} onClick=${()=>setSel(i)} className="cursor-pointer" opacity=${on?1:.25}>
      <circle cx=${d.x} cy=${d.y} r=${sel==i?7:5} fill=${col(v)==="transparent"?"#475569":col(v)} stroke=${sel==i?"var(--lbl)":"var(--bg)"} strokeWidth="1.5"/>
      ${sel==i&&html`<circle cx=${d.x} cy=${d.y} r="10" fill="none" stroke="#0284C7" className="pulse"/>`}
      <text x=${d.x+9} y=${d.y+3} fontSize="8" fill="var(--lbl)">${d.n}</text></g>`})}
-    ${layers.vec&&html`<g><circle cx="150" cy="330" r="9" fill="none" stroke="#8B5CF6" strokeWidth="2"/><text x="146" y="334" fontSize="11">🌀</text>
-     ${[[0,0],[-14,14],[14,-14]].map(([a,b],i)=>html`<line key=${i} x1=${125+a} y1=${330+b} x2=${168+a} y2=${330+b} stroke="var(--vec)" strokeWidth="1.5" strokeDasharray="4 2" className="dash"/>`)}
-     <text x="90" y="315" fontSize="8" fill="var(--vec)">Δ 45 km E</text></g>`}
+    ${layers.vec&&html`<g><circle cx=${SC[0]} cy=${SC[1]} r="9" fill="none" stroke="#8B5CF6" strokeWidth="2"/><text x=${SC[0]-4} y=${SC[1]+4} fontSize="11">🌀</text>
+     ${[[0,0],[-6,14],[-6,-14]].map(([a,b],i)=>html`<line key=${i} x1=${SC[0]+12+a} y1=${SC[1]+b} x2=${SC[0]+50+a} y2=${SC[1]+b} stroke="var(--vec)" strokeWidth="1.5" strokeDasharray="4 2" className="dash"/>`)}
+     <text x=${SC[0]-30} y=${SC[1]-16} fontSize="8" fill="var(--vec)">Δ 45 km E</text></g>`}
    </svg>
    <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
     <div className="card !p-2 text-[10px]"><div className="flex h-2 w-44 rounded overflow-hidden"><span className="flex-1 bg-slate-700"/><span className="flex-1" style=${{background:"#10B981"}}/><span className="flex-1" style=${{background:"#F59E0B"}}/><span className="flex-1" style=${{background:"#F97316"}}/><span className="flex-1" style=${{background:"#8B5CF6"}}/></div>
